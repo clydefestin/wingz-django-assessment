@@ -1,9 +1,13 @@
+from datetime import timedelta
+
+from django.db.models import Prefetch
+from django.utils import timezone
+
 from rest_framework import viewsets
 
-from .models import User
-from .models import Ride
-from .models import RideEvent
-
+from .filters import RideFilter
+from .models import User, Ride, RideEvent
+from .permissions import IsAdminRole
 from .serializers import (
     UserSerializer,
     RideSerializer,
@@ -17,14 +21,45 @@ class UserViewSet(viewsets.ModelViewSet):
 
     serializer_class = UserSerializer
 
+    permission_classes = [IsAdminRole]
+
+
 class RideViewSet(viewsets.ModelViewSet):
 
     queryset = Ride.objects.all()
 
     serializer_class = RideSerializer
 
+    permission_classes = [IsAdminRole]
+
+    filterset_class = RideFilter
+
+    ordering_fields = ["pickup_time"]
+
+    def get_queryset(self):
+
+        yesterday = timezone.now() - timedelta(hours=24)
+
+        return (
+            self.queryset
+            .select_related(
+                "id_driver",
+                "id_rider",
+            )
+            .prefetch_related(
+                Prefetch(
+                    "ride_events",
+                    queryset=RideEvent.objects.filter(
+                        created_at__gte=yesterday
+                    ),
+                )
+            )
+        )
+
 class RideEventViewSet(viewsets.ModelViewSet):
 
     queryset = RideEvent.objects.all()
 
     serializer_class = RideEventSerializer
+
+    permission_classes = [IsAdminRole]

@@ -9,9 +9,7 @@ from .views import (
 router = DefaultRouter()
 
 router.register("users", UserViewSet)
-
 router.register("rides", RideViewSet)
-
 router.register("ride-events", RideEventViewSet)
 
 urlpatterns = router.urls
