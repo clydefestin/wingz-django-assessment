@@ -34,6 +34,8 @@ class RideEventSerializer(serializers.ModelSerializer):
 #RideSerializer
 class RideSerializer(serializers.ModelSerializer):
 
+    distance = serializers.FloatField(read_only=True)
+
     rider = UserSerializer(
         source="id_rider",
         read_only=True,
@@ -50,7 +52,6 @@ class RideSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
-    distance = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Ride
