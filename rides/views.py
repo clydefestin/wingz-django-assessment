@@ -35,7 +35,7 @@ class RideViewSet(viewsets.ModelViewSet):
     queryset = Ride.objects.all()
     serializer_class = RideSerializer
 
-    # permission_classes = [IsAdminRole]
+    #permission_classes = [IsAdminRole]
 
     filter_backends = [
         DjangoFilterBackend,
