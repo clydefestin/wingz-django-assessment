@@ -118,6 +118,15 @@ The Ride API is optimized using:
 
 These optimizations reduce unnecessary SQL queries while retrieving rider, driver, and ride event information.
 
+## Testing
+
+The project includes basic API tests using Django REST Framework's `APITestCase`.
+
+### Run the tests
+
+```bash
+python manage.py test
+
 
 # Project Structure
 
@@ -132,6 +141,7 @@ wingz-django-assessment/
 │   ├── models.py
 │   ├── permissions.py
 │   ├── serializers.py
+│   ├── test.py
 │   ├── urls.py
 │   └── views.py
 │
