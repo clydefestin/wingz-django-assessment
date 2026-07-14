@@ -1,5 +1,5 @@
 from datetime import timedelta
-
+from rest_framework.exceptions import ValidationError
 from django.db.models import (
     Prefetch,
     F,
@@ -35,7 +35,7 @@ class RideViewSet(viewsets.ModelViewSet):
     queryset = Ride.objects.all()
     serializer_class = RideSerializer
 
-    #permission_classes = [IsAdminRole]
+    # permission_classes = [IsAdminRole]
 
     filter_backends = [
         DjangoFilterBackend,
@@ -63,16 +63,13 @@ class RideViewSet(viewsets.ModelViewSet):
     ]
 
     def get_queryset(self):
-
         yesterday = timezone.now() - timedelta(hours=24)
 
         queryset = (
-            self.queryset
-            .select_related(
+            Ride.objects.select_related(
                 "id_rider",
                 "id_driver",
-            )
-            .prefetch_related(
+            ).prefetch_related(
                 Prefetch(
                     "ride_events",
                     queryset=RideEvent.objects.filter(
@@ -88,10 +85,30 @@ class RideViewSet(viewsets.ModelViewSet):
         print("Latitude:", latitude)
         print("Longitude:", longitude)
 
-        if latitude and longitude:
+        # If only one coordinate is supplied
+        if (latitude and not longitude) or (longitude and not latitude):
+            raise ValidationError(
+                {
+                    "detail": (
+                        "Both latitude and longitude must be provided "
+                        "to sort rides by distance."
+                    )
+                }
+            )
 
-            latitude = float(latitude)
-            longitude = float(longitude)
+        # Distance sorting
+        if latitude and longitude:
+            try:
+                latitude = float(latitude)
+                longitude = float(longitude)
+            except (TypeError, ValueError):
+                raise ValidationError(
+                    {
+                        "detail": (
+                            "Latitude and longitude must be valid numbers."
+                        )
+                    }
+                )
 
             print("Distance sorting activated")
 
@@ -101,8 +118,7 @@ class RideViewSet(viewsets.ModelViewSet):
                         (F("pickup_latitude") - Value(latitude))
                         * (F("pickup_latitude") - Value(latitude))
                     )
-                    +
-                    (
+                    + (
                         (F("pickup_longitude") - Value(longitude))
                         * (F("pickup_longitude") - Value(longitude))
                     ),
