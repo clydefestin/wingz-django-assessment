@@ -297,23 +297,27 @@ GET /api/rides/?latitude=14.5995&longitude=120.9842
 
 ---
 
+
+
 # Bonus SQL
 
-The repository includes a PostgreSQL-compatible SQL query in:
+The repository includes a PostgreSQL-compatible SQL query(`bonus_sql.sql`) that generates a monthly report of drivers whose trips exceeded one hour.
 
-```
-bonus_sql.sql
-```
+The query:
 
-The query retrieves:
+- Uses the `RideEvent` table to locate the pickup and dropoff events.
+- Calculates trip duration from the difference between the pickup and dropoff timestamps.
+- Filters trips with a duration greater than one hour.
+- Groups the results by **month** and **driver**.
+- Returns the total number of qualifying trips for each driver per month.
 
-- Ride Information
-- Rider Details
-- Driver Details
-- Latest Ride Event
-- Trip Duration in Minutes
+Example output:
 
----
+| Month | Driver | Trips Over 1 Hour |
+|--------|--------|-------------------|
+| 2024-01 | Chris H | 4 |
+| 2024-01 | Howard Y | 5 |
+| 2024-02 | Chris H | 7 |
 
 # Notes
 

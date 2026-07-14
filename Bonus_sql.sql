@@ -1,51 +1,74 @@
 /*
 Wingz Django Assessment
-Bonus SQL Query (PostgreSQL)
+Bonus SQL (PostgreSQL)
 
+Purpose:
+Return the number of trips whose duration from
+Pickup to Dropoff exceeded one hour,
+grouped by Month and Driver.
 
-Function:
-Return each ride together with:
-- Rider information
-- Driver information
-- Latest ride event
-- Trip duration in minutes
+Trip duration is calculated using RideEvent timestamps.
+
+Pickup Event:
+    'Status changed to pickup'
+
+Dropoff Event:
+    'Status changed to dropoff'
 */
 
-WITH latest_events AS (
+WITH trip_events AS (
+
     SELECT
-        id_ride_id,
-        MAX(created_at) AS latest_event_time
-    FROM rides_rideevent
-    GROUP BY id_ride_id
+
+        r.id_ride,
+
+        d.username AS driver,
+
+        DATE_TRUNC('month', pickup.created_at) AS trip_month,
+
+        pickup.created_at AS pickup_time,
+
+        dropoff.created_at AS dropoff_time,
+
+        EXTRACT(
+            EPOCH FROM (
+                dropoff.created_at - pickup.created_at
+            )
+        ) / 3600 AS duration_hours
+
+    FROM rides_ride r
+
+    INNER JOIN rides_user d
+        ON d.id = r.id_driver_id
+
+    INNER JOIN rides_rideevent pickup
+        ON pickup.id_ride_id = r.id_ride
+       AND pickup.description = 'Status changed to pickup'
+
+    INNER JOIN rides_rideevent dropoff
+        ON dropoff.id_ride_id = r.id_ride
+       AND dropoff.description = 'Status changed to dropoff'
+
 )
 
 SELECT
-    r.id_ride,
-    rider.username AS rider_username,
-    driver.username AS driver_username,
-    r.status,
-    r.pickup_time,
-    le.latest_event_time,
 
-    ROUND(
-        EXTRACT(
-            EPOCH FROM (
-                le.latest_event_time - r.pickup_time
-            )
-        ) / 60,
-        2
-    ) AS trip_duration_minutes
+    TO_CHAR(trip_month, 'YYYY-MM') AS month,
 
-FROM rides_ride r
+    driver,
 
-JOIN rides_user rider
-    ON rider.id = r.id_rider_id
+    COUNT(*) AS trips_over_1_hour
 
-JOIN rides_user driver
-    ON driver.id = r.id_driver_id
+FROM trip_events
 
-LEFT JOIN latest_events le
-    ON le.id_ride_id = r.id_ride
+WHERE duration_hours > 1
+
+GROUP BY
+
+    trip_month,
+    driver
 
 ORDER BY
-    r.pickup_time DESC;
+
+    trip_month,
+    driver;
